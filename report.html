@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Petugas Perarakan Korona Adven 2026</title>
+
+  <!-- Silence Tailwind CDN Production Warning in Console -->
+  <script>
+    (function () {
+      const originalWarn = console.warn;
+      console.warn = function (...args) {
+        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) {
+          return;
+        }
+        originalWarn.apply(console, args);
+      };
+    })();
+  </script>
+
+  <!-- Load Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans antialiased text-gray-800">
+
+  <div class="max-w-[95%] my-8 mx-auto bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+    <div class="text-center mb-6">
+      <h1 class="text-emerald-900 text-2xl font-bold mb-1">Rekapitulasi Petugas Perarakan Korona Adven 2026</h1>
+      <p class="text-gray-600 text-sm">Paroki Katedral Jakarta</p>
+      <button onclick="location.reload()" class="mt-3 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-medium rounded transition">
+        🔄 Refresh Data
+      </button>
+    </div>
+
+    <div id="statusBox" class="text-center py-8 text-base text-gray-500">
+      Memuat Data...
+    </div>
+
+    <table id="pivotTable" class="w-full border-collapse text-xs min-w-[800px] hidden border border-gray-300">
+      <thead>
+        <tr class="bg-emerald-800 text-white font-semibold">
+          <th class="border border-gray-300 p-2.5 text-center bg-emerald-900 w-[140px] whitespace-nowrap">Wilayah</th>
+          <th class="border border-gray-300 p-2.5 text-center whitespace-nowrap">Lingkungan 1</th>
+          <th class="border border-gray-300 p-2.5 text-center whitespace-nowrap">Lingkungan 2</th>
+          <th class="border border-gray-300 p-2.5 text-center whitespace-nowrap">Lingkungan 3</th>
+          <th class="border border-gray-300 p-2.5 text-center whitespace-nowrap">Lingkungan 4</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Public Master reference structure sheet
+    const masterSheetID = "1KOJamWs_pc15iqdGXyA4vR-NTeuKLXHWKZDjerbJPbo";
+    
+    // Private Sheet Web App Endpoint
+    const scriptAppUrl = "https://script.google.com/macros/s/AKfycbwKSastJw9dWFRWyMGMhuswIdiolCtetxOUAKSQk2rfBnijYZIcO9yOkb7KM9hjrw11/exec";
+
+    let masterStructure = [];
+    let registeredData = {};
+
+    // 1. Load Wilayah & Lingkungan matrix from public reference sheet
+    window.handleWildanLingk = function(data) {
+      if (!data.table || !data.table.rows) return;
+
+      const rows = data.table.rows.slice(1);
+      masterStructure = rows.map(row => {
+        const wilayah = (row.c && row.c[0] && row.c[0].v !== null) ? row.c[0].v.toString().trim() : "";
+        const lingk = [];
+        for (let i = 1; i <= 4; i++) {
+          if (row.c && row.c[i] && row.c[i].v !== null && row.c[i].v !== undefined) {
+            const v = row.c[i].v.toString().trim();
+            if (v) lingk.push(v);
+          }
+        }
+        return { wilayah, lingk };
+      }).filter(item => item.wilayah !== "");
+
+      loadPrivateSubmissionsJSONP();
+    };
+
+    // 2. Callback handler for Google Apps Script JSONP data
+    window.handlePrivateSubmissions = function(data) {
+  if (Array.isArray(data)) {
+    data.forEach(item => {
+      // Mengambil properti Wilayah, Lingkungan, dan Nama secara eksplisit
+      const wilayahVal = item['Wilayah'] || item.wilayah || '';
+      const lingkVal = item['Lingkungan'] || item.lingkungan || '';
+      const namaVal = item['Nama Pembawa Korona'] || item.nama || item.p1 || '';
+
+      if (wilayahVal && lingkVal) {
+        const key = `${wilayahVal.toString().trim().toLowerCase()}|${lingkVal.toString().trim().toLowerCase()}`;
+        registeredData[key] = {
+          p1: namaVal ? namaVal.toString().trim() : ""
+        };
+      }
+    });
+  }
+  renderPivotTable();
+};
+
+    // Load private submissions via JSONP tag injection (Bypasses CORS restrictions)
+    function loadPrivateSubmissionsJSONP() {
+      const scriptApp = document.createElement("script");
+      // Menambahkan parameter prefix/callback
+      scriptApp.src = `${scriptAppUrl}?prefix=handlePrivateSubmissions&callback=handlePrivateSubmissions`;
+      scriptApp.onerror = function() {
+        console.error("Gagal memuat data dari Web App. Pastikan Web App diset ke 'Anyone'.");
+        renderPivotTable();
+      };
+      document.body.appendChild(scriptApp);
+    }
+
+    // 3. Render Pivot Table
+    function renderPivotTable() {
+      const statusBox = document.getElementById("statusBox");
+      const pivotTable = document.getElementById("pivotTable");
+      const tableBody = document.getElementById("tableBody");
+
+      tableBody.innerHTML = "";
+
+      masterStructure.forEach(item => {
+        const tr = document.createElement("tr");
+
+        const tdWilayah = document.createElement("td");
+        tdWilayah.className = "border border-gray-300 p-2 bg-gray-50 font-bold text-emerald-900 whitespace-nowrap text-left align-top";
+        tdWilayah.textContent = item.wilayah;
+        tr.appendChild(tdWilayah);
+
+        for (let i = 0; i < 4; i++) {
+          const td = document.createElement("td");
+          td.className = "border border-gray-300 p-2 text-left align-top";
+          const lingkName = item.lingk[i];
+
+          if (lingkName) {
+            const lookupKey = `${item.wilayah.toLowerCase()}|${lingkName.toLowerCase()}`;
+            const match = registeredData[lookupKey];
+
+            if (match && match.p1) {
+              let cellContent = `<strong class="text-[11px] text-emerald-800 block mb-1">${lingkName}</strong>`;
+              cellContent += `<span class="block text-gray-800 font-bold leading-tight">${match.p1}</span>`;
+              td.innerHTML = cellContent;
+            } else {
+              td.innerHTML = `<span class="text-[11px] text-gray-400 block mb-1">${lingkName}</span><span class="text-gray-300">-</span>`;
+            }
+          } else {
+            td.innerHTML = "";
+          }
+
+          tr.appendChild(td);
+        }
+
+        tableBody.appendChild(tr);
+      });
+
+      statusBox.classList.add("hidden");
+      pivotTable.classList.remove("hidden");
+    }
+
+    // Start script by fetching Master Structure
+    const scriptMaster = document.createElement("script");
+    scriptMaster.src = `https://docs.google.com/spreadsheets/d/${masterSheetID}/gviz/tq?tqx=responseHandler:handleWildanLingk&sheet=wildanlingk`;
+    document.body.appendChild(scriptMaster);
+  </script>
+
+</body>
+</html>
