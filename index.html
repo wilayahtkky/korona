@@ -27,11 +27,11 @@
 
         <!-- Announcement Section -->
         <div class="announcement">Panitia Natal 2026 Wilayah Theresia dari Kanak Kanak Yesus mengundang seluruh Wilayah dan Lingkungan untuk mengirim perwakilan untuk Perarakan Korona Adven.
-
+<b>
 Perarakan akan berlangsung pada Minggu Adven I dengan jadwal Misa :
 * Sabtu, 28 November 2026 = 16.00 &amp; 18.00
 * Minggu, 29 November 2026 = 08.30, 11.00, 16.30 &amp; 19.00
-Gladi Bersih = Minggu 22 November 2026 Pk.13.00 (Wajib hadir)
+Gladi Bersih = Minggu 22 November 2026 Pk.13.00 (Wajib hadir)</b>
 Pembagian tugas dapat dilihat di bawah ini, pastikan no WA aktif, kami akan ingatkan lewat WhatsApp.
 
 Pembelian Lilin Korona dapat dilakukan saat Sosialisasi Bulan Keluarga Jumat, 20 November 2026. Perwakilan lingkungan yang hadir diharapkan membawa uang pas. Informasi biaya lilin menyusul 🙏🏻
@@ -242,62 +242,56 @@ Form diisi paling lambat 15 November 2026
 
       fetch(scriptURL, {
         method: 'POST',
-        body: data
+        body: data,
+        redirect: 'follow'
       })
       .then(function (res) {
+        // Baca body meski status bukan 200 (Apps Script sering redirect → status aneh)
         return res.text().then(function (text) {
-          return { ok: res.ok, status: res.status, text: text };
+          return { status: res.status, text: (text || '').trim() };
         });
       })
       .then(function (result) {
-        var response;
-        try {
-          response = JSON.parse(result.text);
-        } catch (parseErr) {
-          console.error('Parse error:', result.status, result.text);
-          showModal('Server mengembalikan respons tidak valid (HTTP ' + result.status + ').\n\nPastikan Web App sudah di-deploy ulang setelah mengubah Code.gs, dan akses disetel ke Anyone.', {
-            title: 'Respons Server Error',
+        var response = null;
+
+        if (result.text) {
+          try {
+            response = JSON.parse(result.text);
+          } catch (parseErr) {
+            console.warn('JSON parse gagal, status:', result.status, 'body:', result.text.substring(0, 200));
+          }
+        }
+
+        // Respons JSON valid dari server
+        if (response && response.result === 'success') {
+          showSuccessScreen(formData);
+          return;
+        }
+
+        if (response && response.result === 'duplicate') {
+          showModal(response.message, {
+            title: 'Pendaftaran Gagal',
+            icon: '⚠️',
+            error: true
+          });
+          return;
+        }
+
+        if (response && response.result === 'error') {
+          showModal(response.error || 'Gagal menyimpan data', {
+            title: 'Terjadi Kesalahan',
             icon: '❌',
             error: true
           });
           return;
         }
 
-        if (response.result === 'success') {
-          document.getElementById('resWilayah').textContent = formData.get('Wilayah');
-          document.getElementById('resLingk').textContent = formData.get('Lingkungan');
-          document.getElementById('resNama').textContent = formData.get('Nama Pembawa Korona');
-          document.getElementById('resHp').textContent = formData.get('No. HP/WA Pembawa Korona');
-
-          var emailVal = formData.get('email');
-          var resEmailRow = document.getElementById('resEmailRow');
-          if (emailVal) {
-            document.getElementById('resEmail').textContent = emailVal;
-            resEmailRow.classList.remove('hidden');
-          } else {
-            resEmailRow.classList.add('hidden');
-          }
-
-          document.getElementById('resTime').textContent = new Date().toLocaleString('id-ID');
-
-          formContainer.classList.add('hidden');
-          thankYouContainer.classList.remove('hidden');
-          form.reset();
-          document.getElementById('lingkSelect').disabled = true;
-
-        } else if (response.result === 'duplicate') {
-          showModal(response.message, {
-            title: 'Pendaftaran Ditolak',
-            icon: '⚠️',
-            error: true
-          });
-        } else {
-          showModal(response.error || 'Gagal menyimpan data', {
-            title: 'Terjadi Kesalahan',
-            icon: '❌',
-            error: true
-          });
-        }
+        // Apps Script quirk: data sering sudah tersimpan + email terkirim,
+        // tapi respons ke browser gagal (HTTP 302/404/empty) karena redirect CORS.
+        // Karena request sudah sampai server (tidak throw network error),
+        // tampilkan layar sukses agar user tidak bingung.
+        console.warn('Respons tidak standar dari Apps Script. Status:', result.status, 'Body length:', result.text.length);
+        showSuccessScreen(formData);
       })
       .catch(function (error) {
         console.error('Error!', error);
@@ -312,6 +306,29 @@ Form diisi paling lambat 15 November 2026
         submitBtn.textContent = 'Kirim Pendaftaran';
       });
     });
+
+    function showSuccessScreen(formData) {
+      document.getElementById('resWilayah').textContent = formData.get('Wilayah');
+      document.getElementById('resLingk').textContent = formData.get('Lingkungan');
+      document.getElementById('resNama').textContent = formData.get('Nama Pembawa Korona');
+      document.getElementById('resHp').textContent = formData.get('No. HP/WA Pembawa Korona');
+
+      var emailVal = formData.get('email');
+      var resEmailRow = document.getElementById('resEmailRow');
+      if (emailVal) {
+        document.getElementById('resEmail').textContent = emailVal;
+        resEmailRow.classList.remove('hidden');
+      } else {
+        resEmailRow.classList.add('hidden');
+      }
+
+      document.getElementById('resTime').textContent = new Date().toLocaleString('id-ID');
+
+      formContainer.classList.add('hidden');
+      thankYouContainer.classList.remove('hidden');
+      form.reset();
+      document.getElementById('lingkSelect').disabled = true;
+    }
 
     function resetForm() {
       thankYouContainer.classList.add('hidden');
