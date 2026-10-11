@@ -211,6 +211,7 @@ select:disabled {
   color: #444;
   line-height: 1.5;
   margin-bottom: 20px;
+  white-space: pre-line;
 }
 
 .modal-box .modal-btn {
