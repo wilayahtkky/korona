@@ -228,7 +228,7 @@ Form diisi paling lambat 15 November 2026
           document.getElementById('lingkSelect').disabled = true;
 
         } else if (response.result === 'duplicate') {
-          alert('⚠️ Pendaftaran Ditolak: ' + response.message);
+          alert('⚠️ Maaf, Pendaftaran tidak dapat dilakukan, karena : ' + response.message);
         } else {
           alert('Error: ' + (response.error || 'Gagal menyimpan data'));
         }
