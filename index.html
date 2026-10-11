@@ -28,10 +28,10 @@
         <!-- Announcement Section -->
         <div class="announcement">Panitia Natal 2026 Wilayah Theresia dari Kanak Kanak Yesus mengundang seluruh Wilayah dan Lingkungan untuk mengirim perwakilan untuk Perarakan Korona Adven.
 
-Perarakan akan berlangsung pada Minggu Adven I dengan jadwal Misa :<B>
+Perarakan akan berlangsung pada Minggu Adven I dengan jadwal Misa :
 * Sabtu, 28 November 2026 = 16.00 &amp; 18.00
 * Minggu, 29 November 2026 = 08.30, 11.00, 16.30 &amp; 19.00
-Gladi Bersih = Minggu 22 November 2026 Pk.13.00 (Wajib hadir)</B>
+Gladi Bersih = Minggu 22 November 2026 Pk.13.00 (Wajib hadir)
 Pembagian tugas dapat dilihat di bawah ini, pastikan no WA aktif, kami akan ingatkan lewat WhatsApp.
 
 Pembelian Lilin Korona dapat dilakukan saat Sosialisasi Bulan Keluarga Jumat, 20 November 2026. Perwakilan lingkungan yang hadir diharapkan membawa uang pas. Informasi biaya lilin menyusul 🙏🏻
@@ -112,7 +112,38 @@ Form diisi paling lambat 15 November 2026
     </div>
   </div>
 
+  <!-- Custom Modal (menggantikan alert browser) -->
+  <div id="customModal" class="modal-overlay hidden">
+    <div class="modal-box" id="modalBox">
+      <div class="modal-icon" id="modalIcon">⚠️</div>
+      <div class="modal-title" id="modalTitle">Pemberitahuan</div>
+      <div class="modal-message" id="modalMessage"></div>
+      <button type="button" class="modal-btn" id="modalOkBtn">OK</button>
+    </div>
+  </div>
+
   <script>
+    // --- Custom Modal (ganti alert browser agar tidak ada "domain says") ---
+    function showModal(message, options) {
+      options = options || {};
+      const modal = document.getElementById('customModal');
+      const box = document.getElementById('modalBox');
+      document.getElementById('modalIcon').textContent = options.icon || '⚠️';
+      document.getElementById('modalTitle').textContent = options.title || 'Pemberitahuan';
+      document.getElementById('modalMessage').textContent = message;
+      box.classList.toggle('modal-error', !!options.error);
+      modal.classList.remove('hidden');
+    }
+
+    function hideModal() {
+      document.getElementById('customModal').classList.add('hidden');
+    }
+
+    document.getElementById('modalOkBtn').addEventListener('click', hideModal);
+    document.getElementById('customModal').addEventListener('click', function (e) {
+      if (e.target === this) hideModal();
+    });
+
     // --- 1. JSONP Dropdown Data Loader (Wilayah & Lingkungan) ---
     // Menggunakan data yang sama dengan referensi (sheet wildanlingk)
     const sheetID = "1KOJamWs_pc15iqdGXyA4vR-NTeuKLXHWKZDjerbJPbo";
@@ -183,7 +214,7 @@ Form diisi paling lambat 15 November 2026
 
     // --- 2. Google Apps Script Form Submission ---
     // GANTI URL di bawah dengan URL deployment Apps Script Anda setelah deploy
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwKSastJw9dWFRWyMGMhuswIdiolCtetxOUAKSQk2rfBnijYZIcO9yOkb7KM9hjrw11/exec';
+    const scriptURL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
     const form = document.forms['Biodata'];
     const submitBtn = document.getElementById('submitBtn');
     const formContainer = document.getElementById('formContainer');
@@ -228,14 +259,26 @@ Form diisi paling lambat 15 November 2026
           document.getElementById('lingkSelect').disabled = true;
 
         } else if (response.result === 'duplicate') {
-          alert('⚠️ Maaf, Pendaftaran tidak dapat dilakukan, karena : ' + response.message);
+          showModal(response.message, {
+            title: 'Pendaftaran Ditolak',
+            icon: '⚠️',
+            error: true
+          });
         } else {
-          alert('Error: ' + (response.error || 'Gagal menyimpan data'));
+          showModal(response.error || 'Gagal menyimpan data', {
+            title: 'Terjadi Kesalahan',
+            icon: '❌',
+            error: true
+          });
         }
       })
       .catch(error => {
         console.error('Error!', error.message);
-        alert('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+        showModal('Gagal terhubung ke server. Periksa koneksi internet Anda.', {
+          title: 'Koneksi Gagal',
+          icon: '❌',
+          error: true
+        });
       })
       .finally(() => {
         submitBtn.disabled = false;

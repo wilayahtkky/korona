@@ -172,6 +172,75 @@ select:disabled {
   color: #1b4332;
 }
 
+/* Custom modal (replaces browser alert) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 100%;
+  padding: 24px 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  text-align: center;
+}
+
+.modal-box .modal-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.modal-box .modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1b4332;
+  margin-bottom: 10px;
+}
+
+.modal-box .modal-message {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.modal-box .modal-btn {
+  width: 100%;
+  background-color: #2d6a4f;
+  color: #fff;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-box .modal-btn:hover {
+  background-color: #1b4332;
+}
+
+.modal-box.modal-error .modal-title {
+  color: #c0392b;
+}
+
+.modal-box.modal-error .modal-btn {
+  background-color: #c0392b;
+}
+
+.modal-box.modal-error .modal-btn:hover {
+  background-color: #a93226;
+}
+
 /* Desktop-friendly tweaks */
 @media (min-width: 640px) {
   body {
