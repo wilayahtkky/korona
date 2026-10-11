@@ -213,8 +213,9 @@ Form diisi paling lambat 15 November 2026
     document.body.appendChild(script);
 
     // --- 2. Google Apps Script Form Submission ---
-    // GANTI URL di bawah dengan URL deployment Apps Script Anda setelah deploy
-    const scriptURL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+    // PENTING: Ganti URL ini dengan URL deployment Web App Anda
+    // Deploy → New deployment → Web app → Execute as: Me → Who has access: Anyone
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwKSastJw9dWFRWyMGMhuswIdiolCtetxOUAKSQk2rfBnijYZIcO9yOkb7KM9hjrw11/exec';
     const form = document.forms['Biodata'];
     const submitBtn = document.getElementById('submitBtn');
     const formContainer = document.getElementById('formContainer');
@@ -222,6 +223,16 @@ Form diisi paling lambat 15 November 2026
 
     form.addEventListener('submit', e => {
       e.preventDefault();
+
+      // Cek placeholder URL
+      if (scriptURL.indexOf('YOUR_DEPLOYMENT_ID') !== -1) {
+        showModal('URL Apps Script belum diisi.\n\nGanti YOUR_DEPLOYMENT_ID di index.html dengan URL deployment Web App Anda.', {
+          title: 'Konfigurasi Belum Lengkap',
+          icon: '⚙️',
+          error: true
+        });
+        return;
+      }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Mengirim Data...';
@@ -233,17 +244,33 @@ Form diisi paling lambat 15 November 2026
         method: 'POST',
         body: data
       })
-      .then(response => response.json())
-      .then(response => {
+      .then(function (res) {
+        return res.text().then(function (text) {
+          return { ok: res.ok, status: res.status, text: text };
+        });
+      })
+      .then(function (result) {
+        var response;
+        try {
+          response = JSON.parse(result.text);
+        } catch (parseErr) {
+          console.error('Parse error:', result.status, result.text);
+          showModal('Server mengembalikan respons tidak valid (HTTP ' + result.status + ').\n\nPastikan Web App sudah di-deploy ulang setelah mengubah Code.gs, dan akses disetel ke Anyone.', {
+            title: 'Respons Server Error',
+            icon: '❌',
+            error: true
+          });
+          return;
+        }
+
         if (response.result === 'success') {
-          // Display Summary Details
           document.getElementById('resWilayah').textContent = formData.get('Wilayah');
           document.getElementById('resLingk').textContent = formData.get('Lingkungan');
           document.getElementById('resNama').textContent = formData.get('Nama Pembawa Korona');
           document.getElementById('resHp').textContent = formData.get('No. HP/WA Pembawa Korona');
 
-          const emailVal = formData.get('email');
-          const resEmailRow = document.getElementById('resEmailRow');
+          var emailVal = formData.get('email');
+          var resEmailRow = document.getElementById('resEmailRow');
           if (emailVal) {
             document.getElementById('resEmail').textContent = emailVal;
             resEmailRow.classList.remove('hidden');
@@ -272,15 +299,15 @@ Form diisi paling lambat 15 November 2026
           });
         }
       })
-      .catch(error => {
-        console.error('Error!', error.message);
-        showModal('Gagal terhubung ke server. Periksa koneksi internet Anda.', {
+      .catch(function (error) {
+        console.error('Error!', error);
+        showModal('Gagal terhubung ke server.\n\nDetail: ' + (error.message || error) + '\n\nPeriksa: URL deployment benar, akses Web App = Anyone, dan koneksi internet aktif.', {
           title: 'Koneksi Gagal',
           icon: '❌',
           error: true
         });
       })
-      .finally(() => {
+      .finally(function () {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Kirim Pendaftaran';
       });
