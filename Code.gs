@@ -46,7 +46,7 @@ function sendUserConfirmationEmail(userEmail, data) {
 
   // Jadwal image: replace GITHUB_RAW_URL with your actual GitHub raw URL after deploy
   // Example: https://raw.githubusercontent.com/USERNAME/REPO/main/jadwal.jpg
-  const jadwalImageUrl = 'https://raw.githubusercontent.com/USERNAME/REPO/main/jadwal.jpg';
+  const jadwalImageUrl = 'https://raw.githubusercontent.com/wilayahtkky/korona/main/jadwal.jpg';
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px;">
@@ -111,6 +111,41 @@ function doPost(e) {
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const nextRow = sheet.getLastRow() + 1;
 
+    // --- Duplicate check: one Lingkungan can only register once ---
+    const submittedLingkungan = (e.parameter['Lingkungan'] || '').toString().trim();
+    const submittedWilayah = (e.parameter['Wilayah'] || '').toString().trim();
+
+    if (submittedLingkungan && sheet.getLastRow() > 1) {
+      const idxLingkungan = headers.indexOf('Lingkungan');
+      const idxWilayah = headers.indexOf('Wilayah');
+      const idxNama = headers.indexOf('Nama Pembawa Korona');
+
+      if (idxLingkungan >= 0) {
+        // Baca semua data sekaligus (lebih aman daripada getRange per kolom)
+        const allData = sheet.getDataRange().getValues(); // termasuk header di baris 0
+
+        for (let i = 1; i < allData.length; i++) {
+          const lingk = (allData[i][idxLingkungan] || '').toString().trim();
+          const wil = idxWilayah >= 0 ? (allData[i][idxWilayah] || '').toString().trim() : '';
+          const namaTerdaftar = idxNama >= 0 ? (allData[i][idxNama] || '').toString().trim() : '';
+
+          if (lingk === submittedLingkungan) {
+            if (!submittedWilayah || !wil || wil === submittedWilayah) {
+              const namaInfo = namaTerdaftar
+                ? ' atas nama "' + namaTerdaftar + '"'
+                : '';
+              return ContentService.createTextOutput(
+                JSON.stringify({
+                  result: 'duplicate',
+                  message: 'Lingkungan "' + submittedLingkungan + '" sudah terdaftar' + namaInfo + '.\n\nSetiap lingkungan hanya boleh mengirim 1 perwakilan.'
+                })
+              ).setMimeType(ContentService.MimeType.JSON);
+            }
+          }
+        }
+      }
+    }
+
     const newRow = headers.map(function (header) {
       if (header === 'id') return Utilities.getUuid();
       if (header === 'timestamp') return new Date();
@@ -143,4 +178,56 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function doGet(e) {
+  try {
+    const doc = SpreadsheetApp.openById(scriptProp.getProperty('key'));
+    let sheet = doc.getSheetByName('pembawakorona');
+
+    if (!sheet) {
+      sheet = doc.getSheets()[0];
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return responseOutput([], e);
+    }
+
+    const headers = data[0];
+    const rows = data.slice(1);
+
+    // Cari indeks kolom
+    const idxWilayah = headers.indexOf('Wilayah');
+    const idxLingkungan = headers.indexOf('Lingkungan');
+    const idxNama = headers.indexOf('Nama Pembawa Korona');
+
+    // Hanya ambil kolom publik yang dibutuhkan laporan
+    const publicData = rows.map(row => {
+      return {
+        'Wilayah': idxWilayah >= 0 ? row[idxWilayah] : '',
+        'Lingkungan': idxLingkungan >= 0 ? row[idxLingkungan] : '',
+        'Nama Pembawa Korona': idxNama >= 0 ? row[idxNama] : ''
+      };
+    });
+
+    return responseOutput(publicData, e);
+
+  } catch (err) {
+    return responseOutput({ error: err.toString() }, e);
+  }
+}
+
+// Fungsi pembantu untuk memformat output JSON / JSONP
+function responseOutput(data, e) {
+  const callback = e && e.parameter ? (e.parameter.callback || e.parameter.prefix) : null;
+  
+  if (callback) {
+    const output = callback + '(' + JSON.stringify(data) + ');';
+    return ContentService.createTextOutput(output)
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
