@@ -267,7 +267,14 @@ Form diisi paling lambat 15 November 2026
           showSuccessScreen(formData);
           return;
         }
-
+        if (response && response.result === 'busy') {
+          showModal(response.message, {
+            title: 'Server sedang Sibuk',
+            icon: '⏳',
+            error: true
+          });
+          return;
+        }
         if (response && response.result === 'duplicate') {
           showModal(response.message, {
             title: 'Pendaftaran Gagal',
