@@ -90,7 +90,18 @@ function sendUserConfirmationEmail(userEmail, data) {
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  // Coba dapatkan kunci antrian maks 10.000 ms (10 detik)
+  const hasLock = lock.tryLock(10000);
+
+  // Jika gagal mendapatkan kunci (antrian penuh / timeout)
+  if (!hasLock) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        result: 'busy',
+        message: 'Server sedang sibuk karena banyaknya pendaftaran bersamaan. Silakan coba klik Kirim Pendaftaran beberapa saat lagi.'
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 
   try {
     // Bot honeypot check
@@ -121,8 +132,7 @@ function doPost(e) {
       const idxNama = headers.indexOf('Nama Pembawa Korona');
 
       if (idxLingkungan >= 0) {
-        // Baca semua data sekaligus (lebih aman daripada getRange per kolom)
-        const allData = sheet.getDataRange().getValues(); // termasuk header di baris 0
+        const allData = sheet.getDataRange().getValues();
 
         for (let i = 1; i < allData.length; i++) {
           const lingk = (allData[i][idxLingkungan] || '').toString().trim();
@@ -176,6 +186,7 @@ function doPost(e) {
       JSON.stringify({ result: 'error', error: err.toString() })
     ).setMimeType(ContentService.MimeType.JSON);
   } finally {
+    // Selalu lepaskan lock setelah proses selesai
     lock.releaseLock();
   }
 }
