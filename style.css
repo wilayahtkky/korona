@@ -62,7 +62,7 @@ h1 small {
   height: auto;
   display: block;
   border-radius: 8px;
-  margin: 16px 0 24px auto;
+  margin: 16px auto 24px auto;
   border: 1px solid #e0e0e0;
 }
 
