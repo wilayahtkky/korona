@@ -48,8 +48,9 @@ h1 small {
 }
 
 .announcement {
-  background-color: #e8f5e9;
-  border-left: 4px solid #2d6a4f;
+  background-color: #f4fbff; // #e8f5e9;
+  border-left: 2px solid #2d6a4f;
+  border-right: 2px solid #2d6a4f;
   padding: 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -119,7 +120,7 @@ select:disabled {
 
 .btn-submit {
   width: 100%;
-  background-color: #2d6a4f;
+  background-color:#5895bb;// #2d6a4f;
   color: #ffffff;
   padding: 14px;
   font-size: 16px;
