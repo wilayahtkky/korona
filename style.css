@@ -173,6 +173,15 @@ select:disabled {
   color: #1b4332;
 }
 
+/* Footer */
+.form-footer {
+  text-align: center;
+  padding: 15px;
+  background-color: #003e64;
+  color: #ffffff;
+  font-size: 0.85rem;
+}
+
 /* Custom modal (replaces browser alert) */
 .modal-overlay {
   position: fixed;
