@@ -46,7 +46,7 @@ function sendUserConfirmationEmail(userEmail, data) {
 
   // Jadwal image: replace GITHUB_RAW_URL with your actual GitHub raw URL after deploy
   // Example: https://raw.githubusercontent.com/USERNAME/REPO/main/jadwal.jpg
-  const jadwalImageUrl = 'https://raw.githubusercontent.com/wilayahtkky/korona/main/jadwal.jpg';
+  const jadwalImageUrl = 'https://raw.githubusercontent.com/wilayahtkky/korona/main/jadwal.png';
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px;">
