@@ -123,13 +123,18 @@ select:disabled {
   background-color:#5895bb;// #2d6a4f;
   color: #ffffff;
   padding: 14px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background-color 0.2s;
   margin-top: 10px;
+  box-shadow: 0 6px 0 #002238, 
+              0 10px 15px rgba(0, 0, 0, 0.25);
+  transition: all 0.15s ease-in-out;
+  transform: translateY(0);
+  outline: none;
 }
 
 .btn-submit:hover {
