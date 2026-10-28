@@ -376,9 +376,17 @@ Form diisi paling lambat 15 November 2026
       document.getElementById('lingkSelect').disabled = true;
     }
 
-    function resetForm() {
-      thankYouContainer.classList.add('hidden');
-      formContainer.classList.remove('hidden');
+// --- 4. Fungsi Tutup Halaman ---
+    function closeWindow() {
+      // 1. Coba tutup tab/jendela
+      window.close();
+
+      // 2. Fallback jika tab dibuka langsung dari link biasa (security browser memblokir window.close)
+      setTimeout(function () {
+        if (!window.closed) {
+          window.location.href = "about:blank";
+        }
+      }, 300);
     }
   </script>
 </body>
